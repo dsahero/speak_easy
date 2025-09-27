@@ -2,7 +2,6 @@ import os
 import json
 import re
 from typing import Dict, List
-from datetime import datetime
 import yt_dlp
 import logging
 

@@ -19,3 +19,6 @@ regex>=2023.8.8
 
 # Optional: numpy is often required
 numpy>=1.24.0
+
+# Youtube audio downloader
+yt-dlp
