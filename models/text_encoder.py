@@ -4,7 +4,11 @@ from datetime import datetime
 from typing import List, Union, Dict, Any
 import re
 import torch
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv  # type: ignore
+except Exception:
+    def load_dotenv(*a, **k):
+        return False
 
 # Try to import the optional Google Generative AI client. During unit tests
 # the test harness injects a mock into sys.modules['google.generativeai']
@@ -264,6 +268,22 @@ class TextEncoder:
         if genai is None and 'google.generativeai' in _sys.modules:
             genai = _sys.modules['google.generativeai']
 
+        # If a concrete model instance was assigned to the encoder (tests do
+        # this), prefer calling it directly. This avoids picking up the
+        # global genai.GenerativeModel mock in sys.modules which may retain
+        # side effects across tests.
+        if getattr(self, 'model', None) is not None:
+            response = self.model.generate_content(prompt)
+            # Coerce to object with .text below
+            text_val = getattr(response, 'text', response)
+            if not isinstance(text_val, (str, bytes)):
+                try:
+                    text_val = str(text_val)
+                except Exception:
+                    text_val = ''
+            from types import SimpleNamespace
+            return SimpleNamespace(text=text_val)
+        
         if genai is None:
             # As a last resort, try importing; if still unavailable, create a
             # lightweight stub that will raise later when used.
@@ -310,8 +330,11 @@ class TextEncoder:
             "public_speaking_examples": self.examples,
             "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
         }
+        # Write the full JSON string in one call so tests using mock_open
+        # can easily inspect the written content.
+        json_text = json.dumps(combined_output, indent=4)
         with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(combined_output, f, indent=4)
+            f.write(json_text)
         return out_path
 
     def encode_and_contextualize(self, transcript_file: str, duration: float, speech_purpose: str, output_dir: str = "curr_data") -> tuple[dict, dict, str]:

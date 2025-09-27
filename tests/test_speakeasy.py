@@ -83,12 +83,10 @@ class TestVideoEncoder(unittest.TestCase):
 class TestTextEncoder(unittest.TestCase):
     def setUp(self):
         self.encoder = TextEncoder(model_name="dummy-model")
+        # Provide a mock model object so tests can stub generate_content on it
+        self.encoder.model = MagicMock()
         self.mock_transcript_content = "This is a test transcript for a scientific presentation about squids."
         self.mock_duration = 600.0 # 10 minutes
-
-        # Mock the encoder's model to have a generate_content method
-        self.encoder.model = MagicMock()
-        self.encoder.model.generate_content = MagicMock()
 
         # Mocking for file operations
         self.mock_open = mock_open(read_data=self.mock_transcript_content)
