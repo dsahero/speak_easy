@@ -1,0 +1,13 @@
+Flask==2.3.2
+Flask-CORS==4.0.0
+torch
+torchvision
+torchaudio
+transformers>=4.31.0
+whisper
+ffmpeg-python>=0.2.0
+google-generativeai
+python-dotenv
+numpy>=1.23
+pandas>=1.5
+scikit-learn>=1.1

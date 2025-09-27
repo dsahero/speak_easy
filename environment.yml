@@ -1,0 +1,38 @@
+name: speakeasy
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Core
+  - python=3.10
+  - pip
+  - numpy>=1.23
+  - pandas>=1.5
+  - tqdm>=4.65
+
+  # System-level
+  - ffmpeg
+  - libsndfile
+
+  # Scikit-learn for KMeans clustering
+  - scikit-learn>=1.1
+
+  # All Python-only packages via pip
+  - pip:
+      # PyTorch CPU wheels
+      - --extra-index-url=https://download.pytorch.org/whl/cpu
+
+      # Deep-learning & media
+      - torch
+      - torchvision
+      - torchaudio
+      - pytorchvideo>=0.1.5
+      - transformers>=4.31.0
+      - whisper
+      - ffmpeg-python>=0.2.0
+      - moviepy>=1.0.3
+
+      # Gemini SDK + dotenv
+      - google-generativeai
+      - python-dotenv
