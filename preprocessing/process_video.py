@@ -12,6 +12,7 @@ import librosa
 
 from models.text_encoder import TextEncoder
 from models.audio_encoder import AudioEncoder
+from models.multimodal_coach import Coach
 
 def send_to_encoders():
     text_encoder = TextEncoder()
@@ -27,6 +28,13 @@ def send_to_encoders():
     print("Grades:", grades)
     print("Audio Context:", audio_context)  
     print("Sent to encoders successfully.")
+
+    # coach = Coach()
+    # coach.analyze_performance(
+    #     text_features=grades,
+    #     context=audio_context,
+    #     examples_info=""
+    # )
 
 def process_video(input_video: str, model_size: str = "base") -> str:
     """
@@ -89,5 +97,5 @@ def process_video(input_video: str, model_size: str = "base") -> str:
     wpm = word_count / (duration_sec / 60)
     print(f"\n⏱️ Speaking Speed: {wpm:.2f} words per minute")
 
-    send_to_encoders()
+    send_to_encoders(duration_sec, word_count, wpm, filler_counts)
     return str(output_file)
