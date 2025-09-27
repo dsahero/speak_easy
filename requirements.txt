@@ -1,0 +1,21 @@
+# Whisper for speech-to-text (PyPI version)
+openai-whisper
+
+# PyTorch CPU version (required by Whisper)
+torch
+torchaudio
+torchvision
+-f https://download.pytorch.org/whl/cpu/torch_stable.html
+
+# Audio processing
+soundfile>=0.12.1
+pydub>=0.25.1
+
+# Video processing (optional, only if you want to handle .mp4/.mov/.avi/.mkv)
+moviepy>=1.0.3
+
+# Regex operations for analysis
+regex>=2023.8.8
+
+# Optional: numpy is often required
+numpy>=1.24.0
