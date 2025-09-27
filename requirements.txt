@@ -22,3 +22,6 @@ numpy>=1.24.0
 
 # Youtube audio downloader
 yt-dlp
+
+# Install Gemini API client
+google.generativeai

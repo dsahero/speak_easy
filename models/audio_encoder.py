@@ -40,7 +40,7 @@ def _configure_genai_from_env():
 
 
 class AudioEncoder:
-    def __init__(self, model_name: str = "gemini-1.5-pro", device: str = "cpu"):
+    def __init__(self, model_name: str = "gemini-2.5-pro", device: str = "cpu"):
         self.model_name = model_name
         self.device = device
         self.context = {}

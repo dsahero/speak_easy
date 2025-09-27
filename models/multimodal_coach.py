@@ -42,7 +42,7 @@ class Coach:
     text features, and external examples via Gemini's multimodal capabilities.
     """
 
-    def __init__(self, model_name: str = "gemini-1.5-flash"): # Use a model capable of multimodal input
+    def __init__(self, model_name: str = "gemini-2.5-flash"): # Use a model capable of multimodal input
         _ensure_genai_configured()
         if genai is not None and hasattr(genai, "GenerativeModel"):
             try:

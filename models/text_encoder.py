@@ -17,7 +17,7 @@ except Exception:
 try:
     import google.generativeai as genai  # type: ignore
 except Exception:
-    genai = None  # type: ignore
+    raise ImportError("google.generativeai package not found. Install it before continuing.")
 
 load_dotenv()  # Load .env variables
 
@@ -56,7 +56,7 @@ class TextEncoder:
     finds public speaking examples, and produces rubric scores.
     """
 
-    def __init__(self, model_name: str = "gemini-1.5-flash", device: str = "cpu"):
+    def __init__(self, model_name: str = "gemini-2.5-flash", device: str = "cpu"):
         self.device = device
         # Store model name and defer creating model instances until call-time so
         # unit tests can patch `google.generativeai.GenerativeModel.generate_content`.

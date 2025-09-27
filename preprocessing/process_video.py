@@ -13,15 +13,20 @@ import librosa
 from models.text_encoder import TextEncoder
 from models.audio_encoder import AudioEncoder
 
-text_encoder = TextEncoder()
-text_encoder.read_transcript("transcript.txt")
-context = text_encoder.extract_context("Persuasive speech")
+def send_to_encoders():
+    text_encoder = TextEncoder()
+    print("Reading transcripts...")
+    text_encoder.read_transcript("preprocessing/transcript.txt")
+    print("Extracting text features...")
+    context = text_encoder.extract_context("public speaking")
+    grades = text_encoder
 
-audio_encoder = AudioEncoder()
-audio_context = audio_encoder.extract_context(context)
-
-print(audio_context)
-
+    print("Extracting audio features...")
+    audio_encoder = AudioEncoder()
+    audio_context = audio_encoder.extract_context(context)
+    print("Grades:", grades)
+    print("Audio Context:", audio_context)  
+    print("Sent to encoders successfully.")
 
 def process_video(input_video: str, model_size: str = "base") -> str:
     """
@@ -91,4 +96,5 @@ def process_video(input_video: str, model_size: str = "base") -> str:
     wpm = word_count / (duration_sec / 60)
     print(f"\n⏱️ Speaking Speed: {wpm:.2f} words per minute")
 
+    send_to_encoders()
     return str(output_file)
