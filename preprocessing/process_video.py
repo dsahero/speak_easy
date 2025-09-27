@@ -10,6 +10,19 @@ from pathlib import Path
 from moviepy import VideoFileClip
 import librosa
 
+from models.text_encoder import TextEncoder
+from models.audio_encoder import AudioEncoder
+
+text_encoder = TextEncoder()
+text_encoder.read_transcript("transcript.txt")
+context = text_encoder.extract_context("Persuasive speech")
+
+audio_encoder = AudioEncoder()
+audio_context = audio_encoder.extract_context(context)
+
+print(audio_context)
+
+
 def process_video(input_video: str, model_size: str = "base") -> str:
     """
     Process a video file: extract audio, transcribe with Whisper,
