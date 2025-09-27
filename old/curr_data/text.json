@@ -1,0 +1,33 @@
+{
+    "content_quality": {
+        "clarity_score": 4,
+        "relevance_score": 3,
+        "example_usage_score": 0
+    },
+    "structure": {
+        "logical_flow_score": 3,
+        "transition_score": 2,
+        "balance_score": 2.5
+    },
+    "vocabulary_style": {
+        "lexical_richness": 1,
+        "word_appropriateness": 4,
+        "repetition_score": 5
+    },
+    "grammar_fluency": {
+        "grammar_correctness": 5,
+        "sentence_fluency": 4,
+        "filler_word_density": 5
+    },
+    "rhetoric_persuasion": {
+        "rhetorical_device_score": 0,
+        "call_to_action_score": 0,
+        "emotional_valence": 2.5
+    },
+    "speaking_length": {
+        "word_count": 12,
+        "words_per_minute": 12.0,
+        "length_score": 0.1
+    },
+    "video_duration_seconds": 60
+}
