@@ -56,8 +56,6 @@ class TextEncoder:
     finds public speaking examples, and produces rubric scores.
     """
 
-    feat_dim = 16  # dummy tensor size for compatibility
-
     def __init__(self, model_name: str = "gemini-1.5-flash", device: str = "cpu"):
         self.device = device
         # Store model name and defer creating model instances until call-time so
