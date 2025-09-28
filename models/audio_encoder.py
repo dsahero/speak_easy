@@ -16,7 +16,7 @@ from typing import Dict, List
 
 YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
 
-MAX_VIDEO_DURATION_SECONDS = 30 * 60  # 30 minutes
+MAX_VIDEO_DURATION_SECONDS = 10 * 60  # 30 minutes
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 load_dotenv()
