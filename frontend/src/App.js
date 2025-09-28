@@ -58,7 +58,7 @@ const VideoIcon = ({ className }) => (
 const mockAnalysisData = {
     contentQuality: { clarityScore: 85, relevanceScore: 92, exampleUsage: 78 },
     structureFlow: { logicalFlow: 88, transitions: 75, balance: 82 },
-    vocabularyStyle: { lexicalRichness: 90, wordAppropriateness: 95, repetitionControl: 80 },
+    vocabularyStyle: { lexicalRichness: 90, wordAppropriateness: 95, rep45etitionControl: 80 },
     grammarFluency: { grammarCorrectness: 98, sentenceFluency: 87, fillerWordControl: 70 },
     speakingMetrics: { wordCount: 1245, wordsPerMinute: 155, duration: "8m 2s" },
     aiCoaching: {
@@ -243,6 +243,13 @@ const mockAnalysisData = {
 //     });
 // };
 
+const formatDuration = (totalSeconds) => {
+    if (!totalSeconds || totalSeconds === 0) return "0s";
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.round(totalSeconds % 60);
+    return `${minutes}m ${seconds}s`;
+};
+
 const analyzeAPI = async (file, onProgress) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -302,9 +309,9 @@ const analyzeAPI = async (file, onProgress) => {
                 fillerWordControl: Math.round(fillerWordControl * 100),
             },
             speakingMetrics: {
-                wordCount: audio_grades.word_count || 0,
-                wordsPerMinute: audio_grades.words_per_minute || 0,
-                duration: audio_grades.duration || "0:00",
+                wordCount: text_grades.word_count || 0,
+                wordsPerMinute: text_grades.words_per_minute || 0,
+                duration: formatDuration(text_grades.video_duration_seconds || 0),
             },
                     aiCoaching: {
                         strengths: audio_grades.areas_for_improvement
