@@ -12,6 +12,7 @@ import librosa
 
 from models.text_encoder import TextEncoder
 from models.audio_encoder import AudioEncoder
+from models.multimodal_coach import Coach
 
 def send_to_encoders(word_count, wpm, audio_file):
     text_encoder = TextEncoder()
@@ -28,6 +29,13 @@ def send_to_encoders(word_count, wpm, audio_file):
     print("Context ", context)  
     print("Getting Audio grades ", audio_grades)
     print("Sent to encoders successfully.")
+
+    # coach = Coach()
+    # coach.analyze_performance(
+    #     text_features=grades,
+    #     context=audio_context,
+    #     examples_info=""
+    # )
 
 def process_video(input_video: str, model_size: str = "base") -> str:
     """
@@ -58,20 +66,13 @@ def process_video(input_video: str, model_size: str = "base") -> str:
     if len(data.shape) > 1:
         data = data.mean(axis=1)  # convert to mono
 
-    audio_16k = librosa.resample(data, orig_sr=samplerate, target_sr=16000)
-    audio_16k = audio_16k.astype(np.float32)
-    audio_16k = whisper.pad_or_trim(audio_16k)
-
-    mel = whisper.log_mel_spectrogram(audio_16k)
-
-    # --- Load Whisper model & transcribe ---
     print("Loading Whisper model...")
     model = whisper.load_model(model_size)
-    mel = mel.to(model.device)
 
-    options = whisper.DecodingOptions()
-    result = whisper.decode(model, mel, options)
-    transcript = result.text
+    print(f"Transcribing {audio_file} ...")
+    result = model.transcribe(str(audio_file))
+    transcript = result["text"]
+
 
     print("\n📝 Transcript:\n", transcript)
 
