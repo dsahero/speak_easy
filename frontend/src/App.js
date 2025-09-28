@@ -313,27 +313,26 @@ const analyzeAPI = async (file, onProgress) => {
                 wordsPerMinute: text_grades.words_per_minute || 0,
                 duration: formatDuration(text_grades.video_duration_seconds || 0),
             },
-                    aiCoaching: {
-                        strengths: audio_grades.areas_for_improvement
-                            ? audio_grades.areas_for_improvement.slice(0, 3)
-                            : ["Great clarity and confidence!"],
-                        areasForImprovement: audio_grades.areas_for_improvement || [],
-                        practiceExercises: [
-                            "Practice your speech in front of a mirror.",
-                            "Record yourself and listen to improve pacing and tone.",
-                        ],
-                    },
-                };
-
-                resolve(formattedData);
-            } else {
-                reject(new Error(`Upload failed: ${xhr.statusText}`));
-            }
+            aiCoaching: {
+                strengths: audio_grades.areas_for_improvement
+                    ? audio_grades.areas_for_improvement.slice(0, 3)
+                    : ["Great clarity and confidence!"],
+                areasForImprovement: audio_grades.areas_for_improvement || [],
+                practiceExercises: [
+                    "Practice your speech in front of a mirror.",
+                    "Record yourself and listen to improve pacing and tone.",
+                ],
+            },
         };
+        resolve(formattedData);
+    } else {
+        reject(new Error(`Upload failed: ${xhr.statusText}`));
+    }
+};
 
-        xhr.onerror = () => reject(new Error("Network error"));
-        xhr.send(formData);
-    });
+xhr.onerror = () => reject(new Error("Network error"));
+    xhr.send(formData);
+});
 };
 
 
