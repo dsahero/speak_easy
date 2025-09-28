@@ -1,57 +1,94 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import LogoImage from './speakeasy_logo.JPG';
 
-// --- SVG Icons (as components for better reusability) ---
+// --- SVG Icons ---
 const UploadCloudIcon = ({ className }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" />
+    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+    <path d="M12 12v9" />
+    <path d="m16 16-4-4-4 4" />
+  </svg>
+);
+
+const VideoIcon = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <path d="m10 15.5 4 2.5v-6l-4 2.5" />
   </svg>
 );
 
 const FileVideoIcon = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-        <polyline points="14 2 14 8 20 8" />
-        <path d="m10 15.5 4 2.5v-6l-4 2.5" />
-    </svg>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <path d="m10 15.5 4 2.5v-6l-4 2.5" />
+  </svg>
 );
 
-const BrainCircuitIcon = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a10 10 0 0 0-10 10c0 1.85.54 3.58 1.45 5.05A10 10 0 0 0 12 22a10 10 0 0 0 8.55-4.95A10 10 0 0 0 22 12a10 10 0 0 0-10-10Z" />
-        <path d="M12 12a2.5 2.5 0 0 0-2.5 2.5c0 1.41.83 2.62 2 3.16V22" />
-        <path d="M12 12a2.5 2.5 0 0 1 2.5 2.5c0 1.41-.83 2.62-2 3.16V22" />
-        <path d="M12 12a2.5 2.5 0 0 0-2.5-2.5c0-1.41.83-2.62 2-3.16V2" />
-        <path d="M12 12a2.5 2.5 0 0 1 2.5-2.5c0-1.41-.83-2.62-2-3.16V2" />
-        <path d="M14.5 4.95A2.5 2.5 0 0 0 12 7.5c-1.41 0-2.62-.83-3.16-2" />
-        <path d="M9.5 19.05A2.5 2.5 0 0 0 12 16.5c1.41 0 2.62.83 3.16 2" />
-        <path d="M4.95 9.5A2.5 2.5 0 0 0 7.5 12c0 1.41-.83 2.62-2 3.16" />
-        <path d="M19.05 14.5A2.5 2.5 0 0 0 16.5 12c0-1.41.83-2.62 2-3.16" />
-    </svg>
+// ✅ Check Mark Icon
+const CheckMarkIcon = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+);
+
+// 🎯 Target Icon
+const TargetIcon = ({ className }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </svg>
+);
+
+
+const BrainCircuitIcon = () => (
+  <div className="flex items-center">
+    <img src="/speakeasy_logo.jpg" alt="SpeakEasy Logo" className="h-8 w-8 object-contain" />
+  </div>
 );
 
 const AlertTriangleIcon = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" />
-    </svg>
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+    <line x1="12" x2="12" y1="9" y2="13" />
+    <line x1="12" x2="12.01" y1="17" y2="17" />
+  </svg>
 );
 
-const ThumbsUpIcon = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M7 10v12" /><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" />
-    </svg>
+// --- Header Component ---
+const Header = ({ view, setView }) => (
+  <header className="bg-gray-900 text-white shadow-md">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between h-16">
+        <div className="flex items-center">
+          <BrainCircuitIcon />
+          <h1 className="ml-3 text-2xl font-bold tracking-tight">SpeakEasy</h1>
+        </div>
+        <nav className="flex items-center space-x-2 rounded-lg p-1 bg-gray-800">
+          <button
+            onClick={() => setView('upload')}
+            className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+              view === 'upload' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            Upload Video
+          </button>
+          <button
+            onClick={() => setView('live')}
+            className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+              view === 'live' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            Live Practice
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
 );
 
-const TrendingUpIcon = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" />
-    </svg>
-);
-
-const VideoIcon = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m22 8-6 4 6 4V8Z"/><path d="M14 22H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2Z"/>
-    </svg>
-);
 
 
 // --- Mock API and Data ---
@@ -338,26 +375,26 @@ xhr.onerror = () => reject(new Error("Network error"));
 
 // --- UI Components ---
 
-const Header = ({ view, setView }) => (
-    <header className="bg-gray-900 text-white shadow-md">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-                <div className="flex items-center">
-                    <BrainCircuitIcon className="h-8 w-8 text-indigo-400" />
-                    <h1 className="ml-3 text-2xl font-bold tracking-tight">SpeakEasy</h1>
-                </div>
-                <nav className="flex items-center space-x-2 rounded-lg p-1 bg-gray-800">
-                    <button onClick={() => setView('upload')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${view === 'upload' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>
-                        Upload Video
-                    </button>
-                    <button onClick={() => setView('live')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${view === 'live' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>
-                        Live Practice
-                    </button>
-                </nav>
-            </div>
-        </div>
-    </header>
-);
+// const Header = ({ view, setView }) => (
+//     <header className="bg-gray-900 text-white shadow-md">
+//         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+//             <div className="flex items-center justify-between h-16">
+//                 <div className="flex items-center">
+//                     <BrainCircuitIcon className="h-8 w-8 text-indigo-400" />
+//                     <h1 className="ml-3 text-2xl font-bold tracking-tight">SpeakEasy</h1>
+//                 </div>
+//                 <nav className="flex items-center space-x-2 rounded-lg p-1 bg-gray-800">
+//                     <button onClick={() => setView('upload')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${view === 'upload' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>
+//                         Upload Video
+//                     </button>
+//                     <button onClick={() => setView('live')} className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${view === 'live' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>
+//                         Live Practice
+//                     </button>
+//                 </nav>
+//             </div>
+//         </div>
+//     </header>
+// );
 
 const ProgressBar = ({ value, label }) => {
     const getColor = (val) => {
@@ -571,13 +608,13 @@ const AnalysisResults = ({ results, onReset }) => (
                             <CoachingCard 
                                 title="Strengths" 
                                 items={results.aiCoaching.strengths} 
-                                icon={<ThumbsUpIcon className="w-6 h-6 text-green-400"/>}
+                                icon={<CheckMarkIcon className="w-6 h-6 text-green-400"/>}
                                 colorClass="text-green-400"
                             />
                              <CoachingCard 
                                 title="Areas for Improvement" 
                                 items={results.aiCoaching.areasForImprovement}
-                                icon={<TrendingUpIcon className="w-6 h-6 text-yellow-400"/>}
+                                icon={<TargetIcon className="w-6 h-6 text-yellow-400"/>}
                                 colorClass="text-yellow-400"
                             />
                              <CoachingCard 
