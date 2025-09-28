@@ -7,6 +7,7 @@ from preprocessing.process_video import process_video
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import shutil
 
 app = Flask(__name__)
 CORS(app)
@@ -44,7 +45,15 @@ def process():
     # Updated to unpack everything
     audio_grades, text_grades, context, examples = process_video(save_path, model_size="base")
 
-    return jsonify({
+    # shutil.rmtree("training_data")
+
+    print("Audio Grades:", type(audio_grades))
+    print(type(audio_grades["clarity_score"]))
+    print("Text Grades:", type(text_grades))
+    print("Context:", type(context))
+    print("Examples:", type(examples))
+
+    result = jsonify({
         "message": "Processing complete ✅",
         "results": {
             "audio_grades": audio_grades,
@@ -53,6 +62,10 @@ def process():
             "examples": examples
         }
     })
+
+    print("content of audio grades", audio_grades) # + "/n" + "content of text grades" + text_grades + "/n" + "content of context" + context + "/n" + "content of examples" + examples + "/n")
+    print(type(result))
+    return result
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

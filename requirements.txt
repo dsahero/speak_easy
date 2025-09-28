@@ -23,6 +23,8 @@ flask-cors
 # Regex operations for analysis
 regex>=2023.8.8
 
+isodate 
+
 # Environment variable management
 librosa
 

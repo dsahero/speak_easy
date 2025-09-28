@@ -6,11 +6,17 @@ from typing import Dict, List
 import yt_dlp
 import logging
 from types import SimpleNamespace
+import isodate 
 
 from dotenv import load_dotenv
 
 import requests
 from typing import Dict, List
+
+
+YOUTUBE_VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
+
+MAX_VIDEO_DURATION_SECONDS = 30 * 60  # 30 minutes
 
 YOUTUBE_SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 load_dotenv()
@@ -90,7 +96,7 @@ class AudioEncoder:
         )
         try:
             keywords_text = self._call_generate(prompt)
-            keywords = [kw.strip() for kw in keywords_text.replace("\n", ",").split(",") if kw.strip()]
+            keywords = [kw.strip() for kw in keywords_text.text.replace("\n", ",").split(",") if kw.strip()]
             return keywords
         except Exception as e:
             print(f"Warning: Gemini keyword generation failed: {e}")
@@ -105,23 +111,64 @@ class AudioEncoder:
 
     def _search_youtube(self, keyword: str, max_results: int = 3) -> List[str]:
         """
-        Queries the YouTube Data API for videos matching the keyword.
+        Queries the YouTube Data API for videos matching the keyword,
+        filtering out videos longer than 30 minutes.
         """
-        params = {
-            "part": "snippet",
-            "q": keyword,
-            "type": "video",
-            "maxResults": max_results,
-            "key": YOUTUBE_API_KEY
-        }
-        try:
-            response = requests.get(YOUTUBE_SEARCH_URL, params=params)
-            response.raise_for_status()
-            items = response.json().get("items", [])
-            return [f"https://www.youtube.com/watch?v={item['id']['videoId']}" for item in items]
-        except Exception as e:
-            print(f"Warning: YouTube search failed for keyword '{keyword}': {e}")
-            return []
+        results = []
+        next_page_token = None
+
+        while len(results) < max_results:
+            params = {
+                "part": "snippet",
+                "q": keyword,
+                "type": "video",
+                "maxResults": 10,  # fetch more to allow filtering
+                "key": YOUTUBE_API_KEY
+            }
+            if next_page_token:
+                params["pageToken"] = next_page_token
+
+            try:
+                response = requests.get(YOUTUBE_SEARCH_URL, params=params)
+                response.raise_for_status()
+                data = response.json()
+                items = data.get("items", [])
+                next_page_token = data.get("nextPageToken", None)
+
+                video_ids = [item["id"]["videoId"] for item in items]
+
+                # Fetch video details to get durations
+                if not video_ids:
+                    break
+
+                videos_response = requests.get(
+                    YOUTUBE_VIDEOS_URL,
+                    params={
+                        "part": "contentDetails",
+                        "id": ",".join(video_ids),
+                        "key": YOUTUBE_API_KEY
+                    }
+                )
+                videos_response.raise_for_status()
+                videos_data = videos_response.json().get("items", [])
+
+                for video in videos_data:
+                    duration_iso = video["contentDetails"]["duration"]
+                    duration_sec = int(isodate.parse_duration(duration_iso).total_seconds())
+                    if duration_sec <= MAX_VIDEO_DURATION_SECONDS:
+                        results.append(f"https://www.youtube.com/watch?v={video['id']}")
+                    if len(results) >= max_results:
+                        break
+
+                # Stop if no more pages
+                if not next_page_token:
+                    break
+
+            except Exception as e:
+                print(f"Warning: YouTube search failed for keyword '{keyword}': {e}")
+                break
+
+        return results
 
     def retrieve_audio_examples(self, context: Dict[str, str], limit: int = 3):
         """
@@ -152,18 +199,26 @@ class AudioEncoder:
         Returns:
             List[str]: List of file paths to the downloaded audios.
         """
-        if os.path.exists(output_dir):
-            try:
-                shutil.rmtree(output_dir)
-            except OSError as e:
-                raise OSError(f"Failed to delete existing directory {output_dir}: {e}")
+        # if os.path.exists(output_dir):
+        #     try:
+        #         shutil.rmtree(output_dir)
+        #     except OSError as e:
+        #         raise OSError(f"Failed to delete existing directory {output_dir}: {e}")
         
         # Create the directory (recursively if needed)
-        try:
-            os.makedirs(output_dir, exist_ok=True)
-        except OSError as e:
-            raise OSError(f"Failed to create directory {output_dir}: {e}")
-        audio_paths = []
+
+        os.makedirs(output_dir, exist_ok=True)  # ensure folder exists
+
+        # Clear all files inside
+        for filename in os.listdir(output_dir):
+            file_path = os.path.join(output_dir, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)  # remove file or symlink
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)  # remove subdirectory
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")
 
         ydl_opts = {
             "format": "bestaudio/best",  # best quality audio
@@ -188,7 +243,6 @@ class AudioEncoder:
                     print(f"Prepared filename: {filename}")
                     audio_file = os.path.splitext(filename)[0] + ".wav"
                     print(f"Converted to audio file: {audio_file}")
-                    audio_paths.append(audio_file)
                     print(f"Audio saved to: {audio_file}")
                 except Exception as e:
                     logging.warning(f"Failed to download audio from {url}: {e}")

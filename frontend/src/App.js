@@ -113,33 +113,55 @@ const mockAnalysisData = {
 //                 onProgress(percentComplete);
 //             }
 //         };
-
 //         xhr.onload = () => {
 //             if (xhr.status === 200) {
 //                 const data = JSON.parse(xhr.responseText);
 //                 const { audio_grades, text_grades, context, examples } = data.results;
 
-//                 // Transform backend data into the mockAnalysisData format
+//                 // 🔍 Debugging logs
+//                 console.log("Raw text_grades:", text_grades);
+//                 console.log("Clarity score raw:", text_grades.clarity_score);
+//                 console.log("Relevance score raw:", text_grades.relevance_score);
+//                 console.log("Example usage raw:", text_grades.example_usage_score);
+//                 console.log("Raw audio_grades:", audio_grades);
+
+//                 // Safely parse numbers
+//                 const clarityScore = Number(text_grades.clarity_score || 0);
+//                 const relevanceScore = Number(text_grades.relevance_score || 0);
+//                 const exampleUsage = Number(text_grades.example_usage_score || 0);
+
+//                 const logicalFlow = Number(text_grades.logical_flow_score || 0);
+//                 const transitions = Number(text_grades.transition_score || 0);
+//                 const balance = Number(text_grades.balance_score || 0);
+
+//                 const lexicalRichness = Number(text_grades.lexical_richness || 0);
+//                 const wordAppropriateness = Number(text_grades.word_appropriateness || 0);
+//                 const repetitionControl = Number(text_grades.repetition_score || 0);
+
+//                 const grammarCorrectness = Number(text_grades.grammar_correctness || 0);
+//                 const sentenceFluency = Number(text_grades.sentence_fluency || 0);
+//                 const fillerWordControl = Number(audio_grades.filler_word_control || 0);
+
 //                 const formattedData = {
 //                     contentQuality: {
-//                         clarityScore: Math.round((text_grades["clarity_score"] || 0) * 100),
-//                         relevanceScore: Math.round((text_grades.relevance_score || 0) * 100),
-//                         exampleUsage: Math.round((text_grades.example_usage_score || 0) * 100),
+//                         clarityScore: Math.round(clarityScore * 100),
+//                         relevanceScore: Math.round(relevanceScore * 100),
+//                         exampleUsage: Math.round(exampleUsage * 100),
 //                     },
 //                     structureFlow: {
-//                         logicalFlow: Math.round((text_grades.logical_flow_score || 0) * 100),
-//                         transitions: Math.round((text_grades.transition_score || 0) * 100),
-//                         balance: Math.round((text_grades.balance_score || 0) * 100),
+//                         logicalFlow: Math.round(logicalFlow * 100),
+//                         transitions: Math.round(transitions * 100),
+//                         balance: Math.round(balance * 100),
 //                     },
 //                     vocabularyStyle: {
-//                         lexicalRichness: Math.round((text_grades.lexical_richness || 0) * 100),
-//                         wordAppropriateness: Math.round((text_grades.word_appropriateness || 0) * 100),
-//                         repetitionControl: Math.round((text_grades.repetition_score || 0) * 100),
+//                         lexicalRichness: Math.round(lexicalRichness * 100),
+//                         wordAppropriateness: Math.round(wordAppropriateness * 100),
+//                         repetitionControl: Math.round(repetitionControl * 100),
 //                     },
 //                     grammarFluency: {
-//                         grammarCorrectness: Math.round((text_grades.grammar_correctness || 0) * 100),
-//                         sentenceFluency: Math.round((text_grades.sentence_fluency || 0) * 100),
-//                         fillerWordControl: Math.round(((audio_grades.filler_word_control || 0)) * 100),
+//                         grammarCorrectness: Math.round(grammarCorrectness * 100),
+//                         sentenceFluency: Math.round(sentenceFluency * 100),
+//                         fillerWordControl: Math.round(fillerWordControl * 100),
 //                     },
 //                     speakingMetrics: {
 //                         wordCount: audio_grades.word_count || 0,
@@ -163,40 +185,100 @@ const mockAnalysisData = {
 //                 reject(new Error(`Upload failed: ${xhr.statusText}`));
 //             }
 //         };
+    
+
+
+// //         xhr.onload = () => {
+// //             if (xhr.status === 200) {
+// //                 const data = JSON.parse(xhr.responseText);
+// //                 const { audio_grades, text_grades, context, examples } = data.results;
+
+// //                 // Transform backend data into the mockAnalysisData format
+// //                 const formattedData = {
+// //                     contentQuality: {
+// //                         clarityScore: Math.round((text_grades["clarity_score"] || 0) * 100),
+// //                         relevanceScore: Math.round((text_grades.relevance_score || 0) * 100),
+// //                         exampleUsage: Math.round((text_grades.example_usage_score || 0) * 100),
+// //                     },
+// //                     structureFlow: {
+// //                         logicalFlow: Math.round((text_grades.logical_flow_score || 0) * 100),
+// //                         transitions: Math.round((text_grades.transition_score || 0) * 100),
+// //                         balance: Math.round((text_grades.balance_score || 0) * 100),
+// //                     },
+// //                     vocabularyStyle: {
+// //                         lexicalRichness: Math.round((text_grades.lexical_richness || 0) * 100),
+// //                         wordAppropriateness: Math.round((text_grades.word_appropriateness || 0) * 100),
+// //                         repetitionControl: Math.round((text_grades.repetition_score || 0) * 100),
+// //                     },
+// //                     grammarFluency: {
+// //                         grammarCorrectness: Math.round((text_grades.grammar_correctness || 0) * 100),
+// //                         sentenceFluency: Math.round((text_grades.sentence_fluency || 0) * 100),
+// //                         fillerWordControl: Math.round(((audio_grades.filler_word_control || 0)) * 100),
+// //                     },
+// //                     speakingMetrics: {
+// //                         wordCount: audio_grades.word_count || 0,
+// //                         wordsPerMinute: audio_grades.words_per_minute || 0,
+// //                         duration: audio_grades.duration || "0:00",
+// //                     },
+// //                     aiCoaching: {
+// //                         strengths: audio_grades.areas_for_improvement
+// //                             ? audio_grades.areas_for_improvement.slice(0, 3)
+// //                             : ["Great clarity and confidence!"],
+// //                         areasForImprovement: audio_grades.areas_for_improvement || [],
+// //                         practiceExercises: [
+// //                             "Practice your speech in front of a mirror.",
+// //                             "Record yourself and listen to improve pacing and tone.",
+// //                         ],
+// //                     },
+// //                 };
+
+// //                 resolve(formattedData);
+// //             } else {
+// //                 reject(new Error(`Upload failed: ${xhr.statusText}`));
+// //             }
+// //         };
 
 //         xhr.onerror = () => reject(new Error("Network error"));
 //         xhr.send(formData);
 //     });
 // };
 
-xhr.onload = () => {
-    if (xhr.status === 200) {
+const analyzeAPI = async (file, onProgress) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/process");
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        onProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
         const data = JSON.parse(xhr.responseText);
-        const { audio_grades, text_grades, context, examples } = data.results;
+        const { audio_grades, text_grades } = data.results;
 
-        // 🔍 Debugging logs
-        console.log("Raw text_grades:", text_grades);
-        console.log("Clarity score raw:", text_grades.clarity_score);
-        console.log("Relevance score raw:", text_grades.relevance_score);
-        console.log("Example usage raw:", text_grades.example_usage_score);
-        console.log("Raw audio_grades:", audio_grades);
+        // Text grades mapping
+        const clarityScore = Number(text_grades.content_quality.clarity_score || 0);
+        const relevanceScore = Number(text_grades.content_quality.relevance_score || 0);
+        const exampleUsage = Number(text_grades.content_quality.example_usage_score || 0);
 
-        // Safely parse numbers
-        const clarityScore = Number(text_grades.clarity_score || 0);
-        const relevanceScore = Number(text_grades.relevance_score || 0);
-        const exampleUsage = Number(text_grades.example_usage_score || 0);
+        const logicalFlow = Number(text_grades.structure.logical_flow_score || 0);
+        const transitions = Number(text_grades.structure.transition_score || 0);
+        const balance = Number(text_grades.structure.balance_score || 0);
 
-        const logicalFlow = Number(text_grades.logical_flow_score || 0);
-        const transitions = Number(text_grades.transition_score || 0);
-        const balance = Number(text_grades.balance_score || 0);
+        const lexicalRichness = Number(text_grades.vocabulary_style.lexical_richness || 0);
+        const wordAppropriateness = Number(text_grades.vocabulary_style.word_appropriateness || 0);
+        const repetitionControl = Number(text_grades.vocabulary_style.repetition_score || 0);
 
-        const lexicalRichness = Number(text_grades.lexical_richness || 0);
-        const wordAppropriateness = Number(text_grades.word_appropriateness || 0);
-        const repetitionControl = Number(text_grades.repetition_score || 0);
-
-        const grammarCorrectness = Number(text_grades.grammar_correctness || 0);
-        const sentenceFluency = Number(text_grades.sentence_fluency || 0);
-        const fillerWordControl = Number(audio_grades.filler_word_control || 0);
+        const grammarCorrectness = Number(text_grades.grammar_fluency.grammar_correctness || 0);
+        const sentenceFluency = Number(text_grades.grammar_fluency.sentence_fluency || 0);
+        const fillerWordControl = Number(text_grades.grammar_fluency.filler_word_density || 0);
 
         const formattedData = {
             contentQuality: {
@@ -224,24 +306,28 @@ xhr.onload = () => {
                 wordsPerMinute: audio_grades.words_per_minute || 0,
                 duration: audio_grades.duration || "0:00",
             },
-            aiCoaching: {
-                strengths: audio_grades.areas_for_improvement
-                    ? audio_grades.areas_for_improvement.slice(0, 3)
-                    : ["Great clarity and confidence!"],
-                areasForImprovement: audio_grades.areas_for_improvement || [],
-                practiceExercises: [
-                    "Practice your speech in front of a mirror.",
-                    "Record yourself and listen to improve pacing and tone.",
-                ],
-            },
+                    aiCoaching: {
+                        strengths: audio_grades.areas_for_improvement
+                            ? audio_grades.areas_for_improvement.slice(0, 3)
+                            : ["Great clarity and confidence!"],
+                        areasForImprovement: audio_grades.areas_for_improvement || [],
+                        practiceExercises: [
+                            "Practice your speech in front of a mirror.",
+                            "Record yourself and listen to improve pacing and tone.",
+                        ],
+                    },
+                };
+
+                resolve(formattedData);
+            } else {
+                reject(new Error(`Upload failed: ${xhr.statusText}`));
+            }
         };
 
-        resolve(formattedData);
-    } else {
-        reject(new Error(`Upload failed: ${xhr.statusText}`));
-    }
+        xhr.onerror = () => reject(new Error("Network error"));
+        xhr.send(formData);
+    });
 };
-
 
 
 // --- UI Components ---
@@ -747,6 +833,7 @@ function App() {
             );
     }
 };
+
 
 
     return (
