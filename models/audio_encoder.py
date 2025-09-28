@@ -1,4 +1,5 @@
 import os
+import shutil
 import json
 import re
 from typing import Dict, List
@@ -40,11 +41,14 @@ def _configure_genai_from_env():
 
 
 class AudioEncoder:
-    def __init__(self, model_name: str = "gemini-2.5-pro", device: str = "cpu"):
+    def __init__(self, text_scores: str, json_config: str, user_audio_path:str, model_name: str = "gemini-2.5-pro", device: str = "cpu"):
         self.model_name = model_name
         self.device = device
-        self.context = {}
-        self.audio_examples = []  # will store audio file paths later
+        self.user_audio_path = user_audio_path
+        self.context = json_config
+        self.text_scores = text_scores
+        self.scores = {}
+        self.audio_urls = []  # will store audio file paths later
 
     def _call_generate(self, prompt: str):
         _configure_genai_from_env()
@@ -58,19 +62,9 @@ class AudioEncoder:
             text_val = str(text_val)
         from types import SimpleNamespace
         return SimpleNamespace(text=text_val)
+    
 
-    def extract_context(self, text_encoder_context: Dict[str, str]) -> Dict[str, str]:
-        """
-        Takes context from TextEncoder and stores it for AudioEncoder grading.
-        """
-        self.context = {
-            "specific_topic": text_encoder_context.get("specific_topic", "unknown"),
-            "general_topic": text_encoder_context.get("general_topic", "unknown"),
-            "format": text_encoder_context.get("format", "unknown")
-        }
-        return self.context
-
-    def retrieve_audio_examples(self, context: Dict[str, str], limit: int = 3) -> List[str]:
+    def retrieve_audio_examples(self, context: Dict[str, str], limit: int = 3):
         """
         Given the context from TextEncoder, search for public speaking videos
         that match the topic and format, and return their URLs.
@@ -115,10 +109,8 @@ class AudioEncoder:
             print(f"Warning: Failed to retrieve audio examples. Error: {e}")
             self.audio_examples = []
 
-        return self.audio_examples
 
-
-    def download_reference_audio(self, video_urls: List[str], output_dir: str = "reference_audios") -> List[str]:
+    def download_reference_audio(self, video_urls: List[str], output_dir: str = "training_data"):
         """
         Downloads audio from given video URLs using yt_dlp and saves them locally.
 
@@ -129,7 +121,17 @@ class AudioEncoder:
         Returns:
             List[str]: List of file paths to the downloaded audios.
         """
-        os.makedirs(output_dir, exist_ok=True)
+        if os.path.exists(output_dir):
+            try:
+                shutil.rmtree(output_dir)
+            except OSError as e:
+                raise OSError(f"Failed to delete existing directory {output_dir}: {e}")
+        
+        # Create the directory (recursively if needed)
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+        except OSError as e:
+            raise OSError(f"Failed to create directory {output_dir}: {e}")
         audio_paths = []
 
         ydl_opts = {
@@ -155,9 +157,7 @@ class AudioEncoder:
                 except Exception as e:
                     logging.warning(f"Failed to download audio from {url}: {e}")
 
-        return audio_paths
-
-    def grade_audio(self, user_audio_path: str, reference_audio_path: str) -> Dict[str, float]:
+    def grade_audio(self, reference_audio_path: str) -> Dict[str, float]:
         """
         Grade the user's audio against a reference audio using Gemini Pro's audio capabilities.
 
@@ -193,12 +193,13 @@ class AudioEncoder:
             "6. Emotional Tone: Confidence, persuasiveness, engagement.\n"
             "7. Areas for Improvement: Provide specific, constructive tips.\n\n"
             "Speech Context:\n"
-            f"- Specific Topic: {self.context.get('specific_topic', '')}\n"
-            f"- General Topic: {self.context.get('general_topic', '')}\n"
-            f"- Format: {self.context.get('format', '')}\n\n"
-            "Transcript:\n\"\"\"{self.transcript}\"\"\"\n\n"
-            "User Audio Path:\n\"\"\"{user_audio_path}\"\"\"\n"
-            "Reference Audio Path:\n\"\"\"{reference_audio_path}\"\"\"\n\n"
+            f"Text Scores (script evaluation):\n\"\"\"{self.text_scores}\"\"\"\n\n"
+            "Note: These text scores represent the grading of the user's script. "
+            "You can use them as additional context to make more accurate and fair grading decisions.\n\n"
+            f"User Audio Path:\n\"\"\"{self.user_audio_path}\"\"\"\n"
+            f"Reference Audio Files:\n\"\"\"{reference_audio_path}\"\"\"\n\n"
+            "Note: The reference audio path may contain multiple audio files. Compare the user's audio "
+            "against all provided reference audios to generate more reliable and well-rounded feedback.\n\n"
             "Return ONLY a JSON object with the following keys and scores (0.0 to 1.0):\n"
             "{\n"
             "  \"clarity_score\": float,\n"
@@ -214,19 +215,27 @@ class AudioEncoder:
 
         # Step 3 — Call Gemini Pro's audio grading (via helper method)
         print("AudioEncoder: Calling Gemini for audio grading...")
-        response = self._call_generate_audio(prompt, user_audio_path, reference_audio_path)
+        response = self._call_generate_audio(prompt, self.user_audio_path, reference_audio_path)
 
         # Step 4 — Extract JSON safely
         raw = response.text or ""
         raw = re.sub(r"^```json|```$", "", raw.strip(), flags=re.MULTILINE)
 
         try:
-            scores = json.loads(raw)
+            self.scores = json.loads(raw)
             # Ensure rubric keys are present
             for key in rubric_schema.keys():
-                rubric_schema[key] = scores.get(key, 0.0)
+                rubric_schema[key] = self.scores.get(key, 0.0)
         except Exception as e:
             print(f"Warning: Failed to parse Gemini output as JSON. Raw output:\n{raw}\nError: {e}")
-            scores = rubric_schema
+            self.scores = rubric_schema
 
-        return scores
+    
+    def encode_and_contextualize(self) -> tuple[dict, dict, str]:
+        """
+        Wrapper
+        """
+        self.retrieve_audio_examples(self.context)
+        self.download_reference_audio(self.audio_urls,"training_data")
+        self.grade_audio("training_data")
+        return self.scores

@@ -65,7 +65,7 @@ class TextEncoder:
         self.transcript = ""
         self.scores = {}
         self.context = {}
-        self.examples = "" # Store raw text examples or URLs
+        self.examples = {} # Store raw text examples or URLs
 
     def __call__(self, texts: Union[str, List[str]]) -> torch.Tensor:
         """Allow batch calls returning dummy tensors."""
@@ -86,7 +86,7 @@ class TextEncoder:
         except FileNotFoundError:
             raise FileNotFoundError(f"Transcript file not found: {transcript_file}")
 
-    def extract_context(self, speech_purpose: str) -> Dict[str, str]:
+    def extract_context(self, speech_purpose: str):
         """
         Uses Gemini to determine the specific topic, general topic, and format
         of the speech based on the transcript and user-provided purpose.
@@ -114,7 +114,6 @@ class TextEncoder:
                 "general_topic": self.context.get("general_topic", ""),
                 "format": self.context.get("format", "")
             }
-            return self.context
         except Exception as e:
             print(f"Warning: Failed to parse context JSON from Gemini. Raw output:\n{raw}\nError: {e}")
             return {
@@ -123,7 +122,7 @@ class TextEncoder:
                 "format": speech_purpose
             }
 
-    def retrieve_examples(self) -> str:
+    def retrieve_examples(self):
         """
         Searches the web for public speaking examples most closely related to
         the extracted context using Gemini's web search capabilities.
@@ -141,34 +140,63 @@ class TextEncoder:
         else:
             search_query = f"public speaking examples for '{speech_format}'"
 
+        json_schema = {
+            "examples": [
+                {
+                    "title": "string",
+                    "summary": "string",
+                    "url": "string",
+                    "relevance": ["string", "string"]
+                }
+            ]
+        }
+
+
         prompt = (
             f"Find compelling examples of public speaking that are highly relevant to the following context:\n"
             f"- Specific Topic: {specific_topic}\n"
             f"- General Topic: {general_topic}\n"
             f"- Format: {speech_format}\n\n"
-            "Provide a brief summary (1-2 sentences) of each example and a URL if available. "
-            "Prioritize examples that demonstrate excellent delivery for the specified format and topic. "
-            "If no very specific examples are found, provide general excellent public speaking examples "
-            "relevant to the 'format' or 'general topic'. List 3-5 examples. Present this in a readable, non-JSON format."
-            "\n\nSearch Query for Gemini (for context only): " + search_query
+            "Provide exactly 3 examples in JSON format following this schema:\n"
+            f"{json.dumps(json_schema, indent=2)}\n\n"
+            "Rules:\n"
+            "- Each 'summary' should be 2-3 sentences.\n"
+            "- Each 'relevance' field should contain 2-3 bullet points explaining why the example was chosen.\n"
+            "- If no very specific examples are found, provide general excellent public speaking examples relevant to the format or general topic.\n"
+            "- Return ONLY valid JSON. No explanations, no markdown fences.\n\n"
+            f"Search Query for Gemini (for context only): {search_query}"
         )
         print(f"TextEncoder: Calling Gemini for example retrieval with query: '{search_query}'...")
         try:
+            # Step 4 — Call Gemini
             response = self._call_generate(prompt)
-            self.examples = response.text
+            raw_output = response.text or ""
+
+            # Step 5 — Attempt to parse JSON safely
+            try:
+                examples = json.loads(raw_output.strip())
+            except json.JSONDecodeError:
+                print("Warning: Gemini output is not valid JSON. Wrapping raw output.")
+                examples = {"examples": [{"title": "Parsing error", "summary": raw_output, "url": "", "relevance": []}]}
+
+            self.examples = examples
+
         except Exception as e:
             print(f"Warning: Failed to retrieve examples from Gemini. Error: {e}")
-            self.examples = "Could not retrieve specific examples. Focus on general public speaking best practices."
-        return self.examples
+            self.examples = {
+                "examples": [
+                    {
+                        "title": "General Public Speaking Best Practices",
+                        "summary": "Fallback advice since no examples were retrieved.",
+                        "url": "",
+                        "relevance": ["Focus on clarity", "Engage the audience", "Practice pacing"]
+                    }
+                ]
+            }
 
 
-    def grade_transcript(self, duration: float):
+    def grade_transcript(self, word_count, words_per_minute):
         """Send transcript + metrics to Gemini for rubric scoring."""
-
-        # --- Step 1: compute speaking-length metrics ---
-        words = self.transcript.split()
-        word_count = len(words)
-        words_per_minute = (word_count / (duration / 60.0)) if duration > 0 else 0.0
 
         # Adjust ideal WPM for non-native speakers or diverse communication styles
         # A slightly slower pace might be more appropriate for clarity
@@ -214,7 +242,7 @@ class TextEncoder:
                 "emotional_valence": 0.0
             },
             "speaking_length": speaking_length,
-            "video_duration_seconds": round(duration, 2)
+            "video_duration_seconds": round((word_count / words_per_minute) * 60, 2)
         }
 
         # --- Step 3: Gemini call for grading ---
@@ -245,8 +273,6 @@ class TextEncoder:
             if 'vocabulary_style' in self.scores and 'repetition_score' in self.scores['vocabulary_style']:
                 # Assuming Gemini returns a repetition metric. Invert it for a 'score'
                 self.scores['vocabulary_style']['repetition_score'] = round(1.0 - min(1.0, max(0.0, self.scores['vocabulary_style']['repetition_score'])), 2)
-
-
         except Exception as e:
             print(f"Warning: Failed to parse Gemini output as JSON for grading. Raw output:\n{raw}\nError: {e}")
             # Fallback to a default structure to avoid breaking downstream
@@ -318,31 +344,13 @@ class TextEncoder:
         from types import SimpleNamespace
         return SimpleNamespace(text=text_val)
 
-    def save_to_json(self, output_dir: str = "curr_data") -> str:
-        """Save rubric scores and context to a JSON file inside output_dir."""
-        os.makedirs(output_dir, exist_ok=True)
-        out_path = os.path.join(output_dir, f"text_analysis.json")
-        combined_output = {
-            "transcript_scores": self.scores,
-            "speech_context": self.context,
-            "public_speaking_examples": self.examples,
-            "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S")
-        }
-        # Write the full JSON string in one call so tests using mock_open
-        # can easily inspect the written content.
-        json_text = json.dumps(combined_output, indent=4)
-        with open(out_path, "w", encoding="utf-8") as f:
-            f.write(json_text)
-        return out_path
 
-    def encode_and_contextualize(self, transcript_file: str, duration: float, speech_purpose: str, output_dir: str = "curr_data") -> tuple[dict, dict, str]:
+    def encode_and_contextualize(self, transcript_file, word_count, words_per_minute, speech_purpose) -> tuple[dict, dict, str]:
         """
-        Wrapper: read transcript, extract context, retrieve examples, grade it,
-        save JSON in output_dir, return scores, context, and examples.
+        Wrapper: read transcript, extract context, retrieve examples, grade it, return scores, context, and examples.
         """
         self.read_transcript(transcript_file)
-        self.context = self.extract_context(speech_purpose)
-        self.examples = self.retrieve_examples()
-        self.grade_transcript(duration)
-        self.save_to_json(output_dir=output_dir)
+        self.extract_context(speech_purpose)
+        self.retrieve_examples()
+        self.grade_transcript(word_count, words_per_minute)
         return self.scores, self.context, self.examples
