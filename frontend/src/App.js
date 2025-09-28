@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import LogoImage from './speakeasy_logo.JPG';
+import LogoImage from './speakeasy_logo.png';
 
 // --- SVG Icons ---
 const UploadCloudIcon = ({ className }) => (
@@ -45,7 +45,7 @@ const TargetIcon = ({ className }) => (
 
 const BrainCircuitIcon = () => (
   <div className="flex items-center">
-    <img src="/speakeasy_logo.jpg" alt="SpeakEasy Logo" className="h-8 w-8 object-contain" />
+    <img src="/speakeasy_logo.png" alt="SpeakEasy Logo" className="h-8 w-8 object-contain" />
   </div>
 );
 
