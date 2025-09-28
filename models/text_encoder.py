@@ -250,7 +250,7 @@ class TextEncoder:
             },
             "video_duration_seconds": round((word_count / words_per_minute) * 60, 2),
             "word_count": word_count,
-            "words_per_minute": words_per_minute
+            "words_per_minute": round(words_per_minute, 2)
         }
 
         # --- Step 3: Gemini call for grading ---
