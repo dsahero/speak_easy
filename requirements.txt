@@ -1,6 +1,9 @@
 # Whisper for speech-to-text (PyPI version)
 openai-whisper
 
+# Flask for backend server
+flask
+
 # PyTorch CPU version (required by Whisper)
 torch
 torchaudio
@@ -13,6 +16,9 @@ pydub>=0.25.1
 
 # Video processing (optional, only if you want to handle .mp4/.mov/.avi/.mkv)
 moviepy>=1.0.3
+
+# Flask CORS for handling cross-origin requests
+flask-cors
 
 # Regex operations for analysis
 regex>=2023.8.8

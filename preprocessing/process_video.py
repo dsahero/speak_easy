@@ -29,13 +29,9 @@ def send_to_encoders(word_count, wpm, audio_file):
     print("Context ", context)  
     print("Getting Audio grades ", audio_grades)
     print("Sent to encoders successfully.")
+    return audio_grades, text_grades, context, examples
 
-    # coach = Coach()
-    # coach.analyze_performance(
-    #     text_features=grades,
-    #     context=audio_context,
-    #     examples_info=""
-    # )
+    
 
 def process_video(input_video: str, model_size: str = "base") -> str:
     """
@@ -104,5 +100,4 @@ def process_video(input_video: str, model_size: str = "base") -> str:
     wpm = word_count / (duration_sec / 60)
     print(f"\n⏱️ Speaking Speed: {wpm:.2f} words per minute")
 
-    send_to_encoders(word_count, wpm, audio_file)
-    return str(output_file)
+    return send_to_encoders(word_count, wpm, audio_file)

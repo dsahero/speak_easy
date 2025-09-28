@@ -68,28 +68,107 @@ const mockAnalysisData = {
     },
 };
 
-const mockAnalyzeAPI = (file, onProgress) => {
+// const analyzeAPI = async (file, onProgress) => {
+//     // Create form data
+//     const formData = new FormData();
+//     formData.append("file", file);
+
+//     // Use XMLHttpRequest to track upload progress
+//     return new Promise((resolve, reject) => {
+//         const xhr = new XMLHttpRequest();
+//         xhr.open("POST", "http://localhost:5000/process");
+
+//         xhr.upload.onprogress = (event) => {
+//             if (event.lengthComputable) {
+//                 const percentComplete = (event.loaded / event.total) * 100;
+//                 onProgress(percentComplete);
+//             }
+//         };
+
+//         xhr.onload = () => {
+//             if (xhr.status === 200) {
+//                 const data = JSON.parse(xhr.responseText);
+//                 resolve(data.results);
+//             } else {
+//                 reject(new Error(`Upload failed: ${xhr.statusText}`));
+//             }
+//         };
+
+//         xhr.onerror = () => reject(new Error("Network error"));
+//         xhr.send(formData);
+//     });
+// };
+
+const analyzeAPI = async (file, onProgress) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
     return new Promise((resolve, reject) => {
-        let progress = 0;
-        // Simulate upload progress
-        const uploadInterval = setInterval(() => {
-            progress += Math.random() * 10;
-            if (progress > 100) progress = 100;
-            onProgress(progress);
-            if (progress === 100) {
-                clearInterval(uploadInterval);
-                // Simulate analysis delay
-                setTimeout(() => {
-                    if (file.name.includes("fail")) {
-                        reject(new Error("Analysis failed. The video format is not supported."));
-                    } else {
-                        resolve(mockAnalysisData);
-                    }
-                }, 2500); // 2.5s analysis time
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:5000/process");
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                onProgress(percentComplete);
             }
-        }, 200); // Update every 200ms
+        };
+
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                const { audio_grades, text_grades, context, examples } = data.results;
+
+                // Transform backend data into the mockAnalysisData format
+                const formattedData = {
+                    contentQuality: {
+                        clarityScore: Math.round((text_grades.clarity_score || 0) * 100),
+                        relevanceScore: Math.round((text_grades.relevance_score || 0) * 100),
+                        exampleUsage: Math.round((text_grades.example_usage_score || 0) * 100),
+                    },
+                    structureFlow: {
+                        logicalFlow: Math.round((text_grades.logical_flow_score || 0) * 100),
+                        transitions: Math.round((text_grades.transition_score || 0) * 100),
+                        balance: Math.round((text_grades.balance_score || 0) * 100),
+                    },
+                    vocabularyStyle: {
+                        lexicalRichness: Math.round((text_grades.lexical_richness || 0) * 100),
+                        wordAppropriateness: Math.round((text_grades.word_appropriateness || 0) * 100),
+                        repetitionControl: Math.round((text_grades.repetition_score || 0) * 100),
+                    },
+                    grammarFluency: {
+                        grammarCorrectness: Math.round((text_grades.grammar_correctness || 0) * 100),
+                        sentenceFluency: Math.round((text_grades.sentence_fluency || 0) * 100),
+                        fillerWordControl: Math.round(((audio_grades.filler_word_control || 0)) * 100),
+                    },
+                    speakingMetrics: {
+                        wordCount: audio_grades.word_count || 0,
+                        wordsPerMinute: audio_grades.words_per_minute || 0,
+                        duration: audio_grades.duration || "0:00",
+                    },
+                    aiCoaching: {
+                        strengths: audio_grades.areas_for_improvement
+                            ? audio_grades.areas_for_improvement.slice(0, 3)
+                            : ["Great clarity and confidence!"],
+                        areasForImprovement: audio_grades.areas_for_improvement || [],
+                        practiceExercises: [
+                            "Practice your speech in front of a mirror.",
+                            "Record yourself and listen to improve pacing and tone.",
+                        ],
+                    },
+                };
+
+                resolve(formattedData);
+            } else {
+                reject(new Error(`Upload failed: ${xhr.statusText}`));
+            }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error"));
+        xhr.send(formData);
     });
 };
+
 
 
 // --- UI Components ---
@@ -507,7 +586,7 @@ function App() {
         setError(null);
         
         try {
-            const result = await mockAnalyzeAPI(videoFile, (progress) => {
+            const result = await analyzeAPI(videoFile, (progress) => {
                 setUploadProgress(progress);
                 if (progress >= 100) {
                     setStatus('analyzing');
