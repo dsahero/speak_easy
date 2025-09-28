@@ -451,7 +451,9 @@ const CoachingCard = ({ title, items, icon, colorClass }) => (
 
 
 const ResourcesCard = ({ context, examples }) => {
-    // We access the array via examples.examples, based on your JSON schema
+    // --- CHANGE 1: Correctly and safely access the nested array ---
+    // Your JSON is { "examples": [...] }. We need the array inside.
+    // The optional chaining (?.) prevents errors if 'examples' or 'examples.examples' doesn't exist.
     const resourceList = examples?.examples || [];
 
     return (
@@ -461,17 +463,20 @@ const ResourcesCard = ({ context, examples }) => {
                 <h3 className="ml-3 text-lg font-semibold text-indigo-400">💡 Tips & Useful Resources</h3>
             </div>
             
-            {/* Part 1: Display the interpreted topic from the 'context' JSON */}
+            {/* This part for context remains the same */}
             <p className="text-gray-300 mb-5">
                 Based on your speech, it seems like you're discussing: <strong className="text-white">{context.specific_topic}</strong>.
             </p>
 
-            {/* Part 2: Display the video examples from the 'examples' JSON */}
+            {/* --- CHANGE 2: Render the list of examples if it exists --- */}
             {resourceList.length > 0 && (
-                <div className="space-y-4">
-                    <p className="text-gray-300">Here are some resources that might help you refine your message:</p>
+                <div className="space-y-4 border-t border-gray-700 pt-4">
+                    <p className="text-sm font-semibold text-gray-300">
+                        To help you improve, here are some resources that cover similar topics:
+                    </p>
                     {resourceList.map((example, index) => (
-                        <div key={index} className="bg-gray-700/50 p-3 rounded-lg">
+                        <div key={index} className="bg-gray-900/50 p-3 rounded-lg">
+                            {/* Create a clickable link using the title and url */}
                             <a 
                                 href={example.url} 
                                 target="_blank" 
@@ -480,8 +485,9 @@ const ResourcesCard = ({ context, examples }) => {
                             >
                                 {example.title}
                             </a>
-                            <p className="text-sm text-gray-400 mt-1">
-                                We chose this because it's relevant to: {example.relevance.join(', ')}.
+                            {/* Explain the relevance using the relevance array */}
+                            <p className="text-xs text-gray-400 mt-1">
+                                We picked this because it's a great example of: {example.relevance.join(', ')}.
                             </p>
                         </div>
                     ))}
