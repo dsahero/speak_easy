@@ -207,19 +207,19 @@ class TextEncoder:
 
         # Adjust ideal WPM for non-native speakers or diverse communication styles
         # A slightly slower pace might be more appropriate for clarity
-        ideal_min, ideal_max = 100.0, 140.0 # Adjusted from 120-150
-        if ideal_min <= words_per_minute <= ideal_max:
-            length_score = 1.0
-        elif words_per_minute > ideal_max:
-            length_score = ideal_max / words_per_minute
-        else:
-            length_score = words_per_minute / ideal_min
+        # ideal_min, ideal_max = 100.0, 140.0 # Adjusted from 120-150
+        # if ideal_min <= words_per_minute <= ideal_max:
+        #     length_score = 1.0
+        # elif words_per_minute > ideal_max:
+        #     length_score = ideal_max / words_per_minute
+        # else:
+        #     length_score = words_per_minute / ideal_min
 
-        speaking_length = {
-            "word_count": word_count,
-            "words_per_minute": words_per_minute,
-            "length_score": round(length_score, 2)
-        }
+        # speaking_length = {
+        #     "word_count": word_count,
+        #     "words_per_minute": words_per_minute,
+        #     "length_score": round(length_score, 2)
+        # }
 
         # --- Step 2: build schema ---
         schema = {
@@ -260,6 +260,7 @@ class TextEncoder:
             "Therefore, emphasize clarity, logical flow, and ease of understanding over highly complex vocabulary or advanced rhetorical devices. "
             "Return ONLY valid JSON, following this schema exactly. No explanations, no markdown fences. "
             "Each score should be between 0.0 and 1.0, use decimals up to the hundredths place. "
+            "Do not change the values of word_count, words_per_minute and video_duration_seconds keys."
             "A higher score is better. For repetition_score and filler_word_density, a *lower* raw value is better, "
             "but the score should reflect how *good* the speech is (so low density/repetition should yield high scores).\n\n"
             f"Schema:\n{json.dumps(schema, indent=2)}\n\n"
