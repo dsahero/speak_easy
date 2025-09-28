@@ -63,7 +63,7 @@ def process():
         }
     })
 
-    print("content of audio grades", audio_grades) # + "/n" + "content of text grades" + text_grades + "/n" + "content of context" + context + "/n" + "content of examples" + examples + "/n")
+    print("content of text grades", text_grades) # + "/n" + "content of text grades" + text_grades + "/n" + "content of context" + context + "/n" + "content of examples" + examples + "/n")
     print(type(result))
     return result
 
