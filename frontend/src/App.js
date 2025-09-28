@@ -451,9 +451,7 @@ const CoachingCard = ({ title, items, icon, colorClass }) => (
 
 
 const ResourcesCard = ({ context, examples }) => {
-    // --- CHANGE 1: Correctly and safely access the nested array ---
-    // Your JSON is { "examples": [...] }. We need the array inside.
-    // The optional chaining (?.) prevents errors if 'examples' or 'examples.examples' doesn't exist.
+    // This safely accesses the nested array, as before.
     const resourceList = examples?.examples || [];
 
     return (
@@ -463,34 +461,45 @@ const ResourcesCard = ({ context, examples }) => {
                 <h3 className="ml-3 text-lg font-semibold text-indigo-400">💡 Tips & Useful Resources</h3>
             </div>
             
-            {/* This part for context remains the same */}
             <p className="text-gray-300 mb-5">
                 Based on your speech, it seems like you're discussing: <strong className="text-white">{context.specific_topic}</strong>.
             </p>
 
-            {/* --- CHANGE 2: Render the list of examples if it exists --- */}
             {resourceList.length > 0 && (
                 <div className="space-y-4 border-t border-gray-700 pt-4">
                     <p className="text-sm font-semibold text-gray-300">
                         To help you improve, here are some resources that cover similar topics:
                     </p>
-                    {resourceList.map((example, index) => (
-                        <div key={index} className="bg-gray-900/50 p-3 rounded-lg">
-                            {/* Create a clickable link using the title and url */}
-                            <a 
-                                href={example.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="font-semibold text-indigo-400 hover:underline"
-                            >
-                                {example.title}
-                            </a>
-                            {/* Explain the relevance using the relevance array */}
-                            <p className="text-xs text-gray-400 mt-1">
-                                We picked this because it's a great example of: {example.relevance.join(', ')}.
-                            </p>
-                        </div>
-                    ))}
+                    {resourceList.map((example, index) => {
+                        // --- ✅ THIS IS THE FIX ---
+                        // We check if the URL starts with 'http'. If not, we add 'https://' to it.
+                        // This ensures the link is always a full, working URL.
+                        const formattedUrl = example.url && !example.url.startsWith('http') 
+                            ? `https://${example.url}` 
+                            : example.url;
+
+                        return (
+                            <div key={index} className="bg-gray-900/50 p-3 rounded-lg">
+                                <a 
+                                    href={formattedUrl} // We now use the new, always-correct formattedUrl
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="font-semibold text-indigo-400 hover:underline inline-flex items-center group"
+                                >
+                                    <span>{example.title}</span>
+                                    {/* This SVG icon gives a visual cue that it's an external link */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                                    </svg>
+                                </a>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    We picked this because it's a great example of: {example.relevance.join(', ')}.
+                                </p>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
