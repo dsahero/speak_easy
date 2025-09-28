@@ -248,8 +248,9 @@ class TextEncoder:
                 "call_to_action_score": 0.0,
                 "emotional_valence": 0.0
             },
-            "speaking_length": speaking_length,
-            "video_duration_seconds": round((word_count / words_per_minute) * 60, 2)
+            "video_duration_seconds": round((word_count / words_per_minute) * 60, 2),
+            "word_count": word_count,
+            "words_per_minute": words_per_minute
         }
 
         # --- Step 3: Gemini call for grading ---
