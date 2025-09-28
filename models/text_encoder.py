@@ -48,6 +48,7 @@ def _configure_genai_from_env():
         except Exception:
             # Avoid failing import/configuration in environments without network or creds
             pass
+    print("configure_genai_from_env worked. genai is", "configured" if genai is not None else "not available")
 
 
 class TextEncoder:
@@ -66,6 +67,7 @@ class TextEncoder:
         self.scores = {}
         self.context = {}
         self.examples = {} # Store raw text examples or URLs
+        print(f"TextEncoder initialized with model {model_name} on device {device}")
 
     def __call__(self, texts: Union[str, List[str]]) -> torch.Tensor:
         """Allow batch calls returning dummy tensors."""
@@ -75,7 +77,7 @@ class TextEncoder:
             batch = texts
         else:
             raise ValueError("Input to TextEncoder must be str or list of str")
-
+        print(f"TextEncoder: Encoding dummy features for batch of size {len(batch)}")
         return torch.zeros(len(batch), self.feat_dim, device=self.device)
 
     def read_transcript(self, transcript_file: str):
@@ -85,6 +87,7 @@ class TextEncoder:
                 self.transcript = f.read()
         except FileNotFoundError:
             raise FileNotFoundError(f"Transcript file not found: {transcript_file}")
+        print(f"TextEncoder: Loaded transcript from {transcript_file}, length {len(self.transcript)} characters")
 
     def extract_context(self, speech_purpose: str):
         """
@@ -104,7 +107,7 @@ class TextEncoder:
         print("TextEncoder: Calling Gemini for context extraction...")
         response = self._call_generate(prompt)
         raw = response.text or ""
-        raw = re.sub(r"^```json|```$", "", raw.strip(), flags=re.MULTILINE)
+        raw = re.sub(r"^```json|```$", "", raw, flags=re.MULTILINE)
 
         try:
             self.context = json.loads(raw)
@@ -121,6 +124,7 @@ class TextEncoder:
                 "general_topic": "unknown",
                 "format": speech_purpose
             }
+        print(f"TextEncoder: Extracted context: {self.context}")
 
     def retrieve_examples(self):
         """
@@ -150,6 +154,8 @@ class TextEncoder:
                 }
             ]
         }
+
+        print(f"TextEncoder: Building prompt for example retrieval with search query: '{search_query}'")
 
 
         prompt = (
@@ -193,6 +199,7 @@ class TextEncoder:
                     }
                 ]
             }
+            print(f"TextEncoder: Using fallback examples: {self.examples}")
 
 
     def grade_transcript(self, word_count, words_per_minute):

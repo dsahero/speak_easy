@@ -49,12 +49,18 @@ def process_video(input_video: str, model_size: str = "base") -> str:
     Returns:
         str: Path to the saved transcript file
     """
-    audio_file = Path(input_video).with_suffix(".wav")
+    audio_file = Path(input_video).resolve().with_suffix(".wav").resolve()
 
     # --- Extract audio ---
     print(f"Extracting audio from {input_video} ...")
     audio_clip = VideoFileClip(input_video).audio
-    audio_clip.write_audiofile(audio_file, logger=None)
+    audio_clip.write_audiofile(
+    str(audio_file),
+    codec="pcm_s16le",  # safe WAV codec
+    fps=44100,
+    logger=None
+)
+
     audio_clip.close()
     print(f"Audio saved to {audio_file}")
 

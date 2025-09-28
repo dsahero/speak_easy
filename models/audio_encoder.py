@@ -215,7 +215,7 @@ class AudioEncoder:
 
         # Step 3 — Call Gemini Pro's audio grading (via helper method)
         print("AudioEncoder: Calling Gemini for audio grading...")
-        response = self._call_generate_audio(prompt, self.user_audio_path, reference_audio_path)
+        response = self._call_generate(prompt)
 
         # Step 4 — Extract JSON safely
         raw = response.text or ""
