@@ -305,7 +305,7 @@ const analyzeAPI = async (file, onProgress) => {
     xhr.onload = () => {
       if (xhr.status === 200) {
         const data = JSON.parse(xhr.responseText);
-        const { audio_grades, text_grades } = data.results;
+        const { audio_grades, text_grades, context, examples } = data.results;
 
         // Text grades mapping
         const clarityScore = Number(text_grades.content_quality.clarity_score || 0);
@@ -360,6 +360,8 @@ const analyzeAPI = async (file, onProgress) => {
                     "Record yourself and listen to improve pacing and tone.",
                 ],
             },
+            context: context,
+            examples: examples,
         };
         resolve(formattedData);
     } else {
@@ -446,6 +448,49 @@ const CoachingCard = ({ title, items, icon, colorClass }) => (
         </ul>
     </div>
 );
+
+
+const ResourcesCard = ({ context, examples }) => {
+    // We access the array via examples.examples, based on your JSON schema
+    const resourceList = examples?.examples || [];
+
+    return (
+        <div className="bg-gray-800 rounded-xl shadow-lg p-6">
+            <div className="flex items-center mb-4">
+                <BrainCircuitIcon className="w-6 h-6 text-indigo-400"/>
+                <h3 className="ml-3 text-lg font-semibold text-indigo-400">💡 Tips & Useful Resources</h3>
+            </div>
+            
+            {/* Part 1: Display the interpreted topic from the 'context' JSON */}
+            <p className="text-gray-300 mb-5">
+                Based on your speech, it seems like you're discussing: <strong className="text-white">{context.specific_topic}</strong>.
+            </p>
+
+            {/* Part 2: Display the video examples from the 'examples' JSON */}
+            {resourceList.length > 0 && (
+                <div className="space-y-4">
+                    <p className="text-gray-300">Here are some resources that might help you refine your message:</p>
+                    {resourceList.map((example, index) => (
+                        <div key={index} className="bg-gray-700/50 p-3 rounded-lg">
+                            <a 
+                                href={example.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="font-semibold text-indigo-400 hover:underline"
+                            >
+                                {example.title}
+                            </a>
+                            <p className="text-sm text-gray-400 mt-1">
+                                We chose this because it's relevant to: {example.relevance.join(', ')}.
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 const VideoUpload = ({ onUpload, setFile, file, error, setError }) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -576,6 +621,67 @@ const AnalysisInProgress = ({ uploadProgress, status, statusMessage }) => (
 );
 
 
+// const AnalysisResults = ({ results, onReset }) => (
+//     <div className="max-w-7xl mx-auto py-8">
+//         <div className="text-center mb-10">
+//             <h2 className="text-3xl font-extrabold text-white sm:text-4xl">Your Speech Analysis Results</h2>
+//             <p className="mt-4 text-lg text-gray-400">Here's the breakdown of your performance.</p>
+//         </div>
+
+//         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+//             <div className="lg:col-span-2 space-y-8">
+//                 <ScoreCard title="Content Quality" scores={results.contentQuality} />
+//                 <ScoreCard title="Structure & Flow" scores={results.structureFlow} />
+//                 <ScoreCard title="Vocabulary & Style" scores={results.vocabularyStyle} />
+//                 <ScoreCard title="Grammar & Fluency" scores={results.grammarFluency} />
+//             </div>
+
+//             <div className="space-y-8">
+//                 <div>
+//                     <h3 className="text-lg font-semibold text-white mb-4">Speaking Metrics</h3>
+//                     <div className="grid grid-cols-2 gap-4">
+//                         <MetricCard label="Word Count" value={results.speakingMetrics.wordCount} />
+//                         <MetricCard label="WPM" value={results.speakingMetrics.wordsPerMinute} />
+//                         <div className="col-span-2">
+//                            <MetricCard label="Duration" value={results.speakingMetrics.duration} />
+//                         </div>
+//                     </div>
+//                 </div>
+//                 <div>
+//                        <h3 className="text-lg font-semibold text-white mb-4">AI Coaching</h3>
+//                        <div className="space-y-6">
+//                             <CoachingCard 
+//                                 title="Strengths" 
+//                                 items={results.aiCoaching.strengths} 
+//                                 icon={<ThumbsUpIcon className="w-6 h-6 text-green-400"/>}
+//                                 colorClass="text-green-400"
+//                             />
+//                              <CoachingCard 
+//                                 title="Areas for Improvement" 
+//                                 items={results.aiCoaching.areasForImprovement}
+//                                 icon={<TrendingUpIcon className="w-6 h-6 text-yellow-400"/>}
+//                                 colorClass="text-yellow-400"
+//                             />
+//                              <CoachingCard 
+//                                 title="Practice Exercises" 
+//                                 items={results.aiCoaching.practiceExercises}
+//                                 icon={<BrainCircuitIcon className="w-6 h-6 text-indigo-400"/>}
+//                                 colorClass="text-indigo-400"
+//                             />
+//                        </div>
+//                 </div>
+//             </div>
+//         </div>
+//         <div className="text-center mt-12">
+//             <button
+//                 onClick={onReset}
+//                 className="px-8 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500"
+//             >
+//                 {results.from === 'live' ? 'Practice Again' : 'Analyze Another Video'}
+//             </button>
+//         </div>
+//     </div>
+// );
 const AnalysisResults = ({ results, onReset }) => (
     <div className="max-w-7xl mx-auto py-8">
         <div className="text-center mb-10">
@@ -605,20 +711,22 @@ const AnalysisResults = ({ results, onReset }) => (
                 <div>
                        <h3 className="text-lg font-semibold text-white mb-4">AI Coaching</h3>
                        <div className="space-y-6">
+                            {/* ✅ CHANGED: Title updated as requested. */}
                             <CoachingCard 
-                                title="Strengths" 
+                                title="💪 Strength & Areas for Improvement" 
                                 items={results.aiCoaching.strengths} 
                                 icon={<CheckMarkIcon className="w-6 h-6 text-green-400"/>}
                                 colorClass="text-green-400"
                             />
+
+                             {/* ✅ REPLACED: The old card is gone, replaced by our new ResourcesCard */}
+                             <ResourcesCard 
+                                context={results.context} 
+                                examples={results.examples} 
+                             />
+
                              <CoachingCard 
-                                title="Areas for Improvement" 
-                                items={results.aiCoaching.areasForImprovement}
-                                icon={<TargetIcon className="w-6 h-6 text-yellow-400"/>}
-                                colorClass="text-yellow-400"
-                            />
-                             <CoachingCard 
-                                title="Practice Exercises" 
+                                title="🎯 Practice Exercises" 
                                 items={results.aiCoaching.practiceExercises}
                                 icon={<BrainCircuitIcon className="w-6 h-6 text-indigo-400"/>}
                                 colorClass="text-indigo-400"
