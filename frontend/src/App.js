@@ -42,6 +42,13 @@ const TargetIcon = ({ className }) => (
   </svg>
 );
 
+const InfoIcon = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+);
 
 const BrainCircuitIcon = () => (
   <div className="flex items-center">
@@ -103,6 +110,41 @@ const mockAnalysisData = {
         areasForImprovement: ["Try to reduce the use of filler words like 'um' and 'ah', especially during transitions.", "Some sections could benefit from clearer signposting to guide the listener.", "Consider varying your vocal pitch more to add emphasis to key ideas."],
         practiceExercises: ["Record yourself practicing the transitions between your main points.", "Try the 'one-minute impromptu' exercise daily on a random topic to improve fluency."],
     },
+};
+
+const metricDefinitions = {
+    "Content Quality": {
+        description: "Measures the substance and clarity of what you say.",
+        subMetrics: {
+            "Clarity Score": "How easy your language and main points are to understand.",
+            "Relevance Score": "How well your content aligns with the main topic.",
+            "Example Usage": "How effectively you use examples to support your ideas."
+        }
+    },
+    "Structure & Flow": {
+        description: "Assesses the organization and logical progression of your speech.",
+        subMetrics: {
+            "Logical Flow": "How well your arguments and points connect in a logical sequence.",
+            "Transitions": "The smoothness of the connections between different parts of your speech.",
+            "Balance": "How well the introduction, body, and conclusion are proportioned."
+        }
+    },
+    "Vocabulary & Style": {
+        description: "Evaluates your choice of words and overall linguistic style.",
+        subMetrics: {
+            "Lexical Richness": "The variety and sophistication of your vocabulary.",
+            "Word Appropriateness": "How well your word choices fit the context and audience.",
+            "Repetition Control": "How effectively you avoid repeating the same words or phrases."
+        }
+    },
+    "Grammar & Fluency": {
+        description: "Measures your grammatical accuracy and the smoothness of your delivery.",
+        subMetrics: {
+            "Grammar Correctness": "Your adherence to standard grammatical rules.",
+            "Sentence Fluency": "The natural rhythm and flow of your sentences.",
+            "Filler Word Control": "Your ability to avoid filler words (e.g., 'um', 'ah', 'like')."
+        }
+    }
 };
 
 // const analyzeAPI = async (file, onProgress) => {
@@ -418,17 +460,52 @@ const ProgressBar = ({ value, label }) => {
     );
 };
 
-const ScoreCard = ({ title, scores }) => (
-    <div className="bg-gray-800 rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
-        <div className="space-y-4">
-            {Object.entries(scores).map(([key, value]) => {
-                 const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                 return <ProgressBar key={key} label={label} value={value} />;
-            })}
+const ScoreCard = ({ title, scores }) => {
+    // We add a state to control whether the tooltip is visible or not
+    const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+    
+    // We get the specific definitions for this card's title
+    const definitions = metricDefinitions[title];
+
+    return (
+        // ✅ CHANGE 1: We add `position: relative` here so the tooltip positions itself
+        // correctly relative to the card, not the whole page.
+        <div className="bg-gray-800 rounded-xl shadow-lg p-6 relative">
+
+            {/* ✅ CHANGE 2: The header is now a flex container to position the title and icon. */}
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-white">{title}</h3>
+                {/* The new info button toggles the tooltip's visibility on click */}
+                <button 
+                    onClick={() => setIsTooltipVisible(!isTooltipVisible)} 
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label={`More info about ${title}`}
+                >
+                    <InfoIcon className="w-5 h-5" />
+                </button>
+            </div>
+
+            {/* ✅ CHANGE 3: The tooltip itself. It only renders if `isTooltipVisible` is true. */}
+            {isTooltipVisible && definitions && (
+                <div className="absolute right-0 top-14 z-20 w-72 bg-gray-700 p-4 rounded-lg shadow-2xl transition-opacity duration-300 animate-fade-in">
+                    <p className="text-sm text-white font-semibold mb-2">{definitions.description}</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs text-gray-300">
+                        {Object.entries(definitions.subMetrics).map(([key, value]) => (
+                           <li key={key}><strong>{key}:</strong> {value}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            <div className="space-y-4">
+                {Object.entries(scores).map(([key, value]) => {
+                     const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                     return <ProgressBar key={key} label={label} value={value} />;
+                })}
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 const MetricCard = ({ label, value }) => (
     <div className="bg-gray-800 rounded-xl shadow-lg p-4 text-center">
