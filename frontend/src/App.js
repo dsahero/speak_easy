@@ -122,7 +122,7 @@ const analyzeAPI = async (file, onProgress) => {
                 // Transform backend data into the mockAnalysisData format
                 const formattedData = {
                     contentQuality: {
-                        clarityScore: Math.round((text_grades.clarity_score || 0) * 100),
+                        clarityScore: Math.round((text_grades["clarity_score"] || 0) * 100),
                         relevanceScore: Math.round((text_grades.relevance_score || 0) * 100),
                         exampleUsage: Math.round((text_grades.example_usage_score || 0) * 100),
                     },
@@ -345,7 +345,7 @@ const VideoUpload = ({ onUpload, setFile, file, error, setError }) => {
     );
 };
 
-const AnalysisInProgress = ({ uploadProgress, status }) => (
+const AnalysisInProgress = ({ uploadProgress, status, statusMessage }) => (
     <div className="w-full max-w-2xl mx-auto text-center py-12">
         {status === 'uploading' && (
             <>
@@ -365,11 +365,14 @@ const AnalysisInProgress = ({ uploadProgress, status }) => (
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400"></div>
                 </div>
                 <h2 className="text-2xl font-semibold text-white">Analyzing Speech...</h2>
-                <p className="text-gray-400 mt-2">Our AI is processing your video. This may take a moment.</p>
+                <p className="text-gray-400 mt-2">
+                    {statusMessage || "Our AI is processing your video. This may take a moment."}
+                </p>
             </>
         )}
     </div>
 );
+
 
 const AnalysisResults = ({ results, onReset }) => (
     <div className="max-w-7xl mx-auto py-8">
@@ -579,26 +582,34 @@ function App() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [analysisResult, setAnalysisResult] = useState(null);
     const [error, setError] = useState(null);
+    const [statusMessage, setStatusMessage] = useState('');
     
     const handleUpload = useCallback(async (videoFile) => {
-        setStatus('uploading');
-        setUploadProgress(0);
-        setError(null);
-        
-        try {
-            const result = await analyzeAPI(videoFile, (progress) => {
-                setUploadProgress(progress);
-                if (progress >= 100) {
-                    setStatus('analyzing');
-                }
-            });
-            setAnalysisResult(result);
-            setStatus('success');
-        } catch (err) {
-            setError(err.message);
-            setStatus('error');
-        }
-    }, []);
+    setStatus('uploading');
+    setUploadProgress(0);
+    setError(null);
+    setStatusMessage('');
+
+    try {
+        const result = await analyzeAPI(videoFile, (progress, message) => {
+            setUploadProgress(progress);
+
+            // ✅ Only update statusMessage if provided by API
+            if (message) setStatusMessage(message);
+
+            if (progress >= 100) {
+                setStatus('analyzing');
+            }
+        });
+
+        setAnalysisResult(result);
+        setStatus('success');
+    } catch (err) {
+        setError(err.message);
+        setStatus('error');
+    }
+}, []);
+
 
     const handleReset = () => {
         setStatus('idle');
@@ -609,42 +620,61 @@ function App() {
     };
 
     const renderContent = () => {
-        if (view === 'live') {
-            return <LivePractice />;
-        }
+    if (view === 'live') {
+        return <LivePractice />;
+    }
 
-        switch (status) {
-            case 'uploading':
-            case 'analyzing':
-                return <AnalysisInProgress uploadProgress={uploadProgress} status={status} />;
-            case 'success':
-                return <AnalysisResults results={analysisResult} onReset={handleReset} />;
-            case 'error':
-                   return (
-                        <div className="py-8">
-                            <div className="mb-6 flex items-center text-red-400 bg-red-900/20 p-4 rounded-lg max-w-2xl mx-auto">
-                                <AlertTriangleIcon className="w-6 h-6 mr-3 flex-shrink-0"/>
-                                <div>
-                                   <h3 className="font-semibold">Analysis Failed</h3>
-                                   <p className="text-sm">{error}</p>
-                                </div>
-                            </div>
-                            <VideoUpload onUpload={handleUpload} setFile={setFile} file={file} error={null} setError={setError} />
-                        </div>
-                   );
-            case 'idle':
-            default:
-                return (
-                    <div className="py-12 sm:py-20">
-                         <h2 className="text-3xl font-extrabold text-white text-center sm:text-4xl">Upload Your Speech</h2>
-                        <p className="mt-4 text-lg text-gray-400 text-center">Get instant AI-powered feedback to improve your public speaking.</p>
-                        <div className="mt-10">
-                            <VideoUpload onUpload={handleUpload} setFile={setFile} file={file} error={error} setError={setError} />
+    switch (status) {
+        case 'uploading':
+        case 'analyzing':
+            return (
+                <AnalysisInProgress
+                    uploadProgress={uploadProgress}
+                    status={status}
+                    statusMessage={statusMessage} // ✅ pass statusMessage here
+                />
+            );
+        case 'success':
+            return <AnalysisResults results={analysisResult} onReset={handleReset} />;
+        case 'error':
+            return (
+                <div className="py-8">
+                    <div className="mb-6 flex items-center text-red-400 bg-red-900/20 p-4 rounded-lg max-w-2xl mx-auto">
+                        <AlertTriangleIcon className="w-6 h-6 mr-3 flex-shrink-0"/>
+                        <div>
+                            <h3 className="font-semibold">Analysis Failed</h3>
+                            <p className="text-sm">{error}</p>
                         </div>
                     </div>
-                );
-        }
-    };
+                    <VideoUpload
+                        onUpload={handleUpload}
+                        setFile={setFile}
+                        file={file}
+                        error={null}
+                        setError={setError}
+                    />
+                </div>
+            );
+        case 'idle':
+        default:
+            return (
+                <div className="py-12 sm:py-20">
+                    <h2 className="text-3xl font-extrabold text-white text-center sm:text-4xl">Upload Your Speech</h2>
+                    <p className="mt-4 text-lg text-gray-400 text-center">Get instant AI-powered feedback to improve your public speaking.</p>
+                    <div className="mt-10">
+                        <VideoUpload
+                            onUpload={handleUpload}
+                            setFile={setFile}
+                            file={file}
+                            error={error}
+                            setError={setError}
+                        />
+                    </div>
+                </div>
+            );
+    }
+};
+
 
     return (
         <div className="bg-gray-900 text-white min-h-screen font-sans flex flex-col">
